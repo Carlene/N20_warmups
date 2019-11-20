@@ -9,6 +9,9 @@
 -- If rounding isn't working: 
 -- https://stackoverflow.com/questions/13113096/how-to-round-an-average-to-2-decimal-places-in-postgresql/20934099
 
+
+-- This one doesn't partition by country but groups customerids together unlike my lower query
+
 WITH total_spending AS (
 SELECT
 	c.customerid
@@ -45,6 +48,50 @@ SELECT
 	,ts.country
 	,ts.full_price
 	,lead(ts.full_price, 1) OVER (order by country) as spent_more
+
+FROM
+	total_spending as ts) AS leading_price
+
+
+
+-- this one partitions by country so the spent_more and difference columns only relate to prices for customers of a specific country, but doesn't group up customerids. using a group by doesn't seem to merge the duplicate ids
+
+WITH total_spending AS (
+SELECT
+	c.customerid
+	,c.country
+	,ROUND(CAST(SUM(od.unitprice * od.quantity) as numeric), 2) as full_price
+
+FROM
+	orderdetails as od 
+JOIN 
+	orders as o 
+ON
+	od.orderid = o.orderid
+JOIN 
+	customers as c 
+ON
+	o.customerid = c.customerid
+
+GROUP BY
+	2, 1
+
+ORDER BY
+	2, 3 DESC)
+
+SELECT
+	leading_price.customerid
+	,leading_price.country
+	,leading_price.full_price
+	,leading_price.spent_more
+	,full_price - spent_more as difference
+
+FROM (
+SELECT
+	ts.customerid
+	,ts.country
+	,ts.full_price
+	,lead(ts.full_price, 1) OVER (PARTITION BY country ORDER BY ts.full_price DESC) as spent_more
 
 FROM
 	total_spending as ts) AS leading_price
