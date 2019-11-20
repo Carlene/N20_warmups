@@ -30,7 +30,7 @@ GROUP BY
 	2, 1
 
 ORDER BY
-	2)
+	2, 3 DESC)
 
 SELECT
 	leading_price.customerid
@@ -44,7 +44,7 @@ SELECT
 	ts.customerid
 	,ts.country
 	,ts.full_price
-	,coalesce(lead(ts.full_price, 1) OVER (order by country)) as spent_more
+	,lead(ts.full_price, 1) OVER (order by country) as spent_more
 
 FROM
 	total_spending as ts) AS leading_price
