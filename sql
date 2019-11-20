@@ -13,7 +13,7 @@ WITH total_spending AS (
 SELECT
 	c.customerid
 	,c.country
-	,SUM(od.unitprice * od.quantity) as full_price
+	,ROUND(CAST(SUM(od.unitprice * od.quantity) as numeric), 2) as full_price
 
 FROM
 	orderdetails as od 
